@@ -15,3 +15,6 @@ bbdd/
 *.sql.bak
 *.sql.dump
 *.sql.backup
+
+# Carpeta de presupuestos
+presupuestos/

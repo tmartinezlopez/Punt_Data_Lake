@@ -1,0 +1,17 @@
+﻿# Dumps y backups de base de datos
+*.dump
+*.backup
+*.bak
+
+# Carpeta local con BBDD/dumps
+bbdd/
+
+# BBDD locales de desarrollo/restauracion
+*.sqlite
+*.sqlite3
+*.db
+
+# SQL de dumps/restauracion (evita ignorar scripts utiles tipo schema.sql)
+*.sql.bak
+*.sql.dump
+*.sql.backup

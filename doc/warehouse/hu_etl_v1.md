@@ -1,46 +1,59 @@
-# hu_etl_v1.py
+﻿# hu_etl_v1.py
 
 ## Objetivo
-Poblar `analytics.wh_hu_group` y `analytics.wh_hu_node` desde:
+Poblar warehouse HU desde:
 - `analytics.v_hu_raw`
 - `analytics.mv_hu_estructura`
 
-Modo actual: **full load**.
+Modos soportados:
+- `full`
+- `incremental` (con `analytics.wh_etl_watermark`)
 
 ## Scripts
 - `etl/hu_etl_v1.py` (orquestador Python)
-- `database/sql/warehouse/warehouse_hu_v1_load.sql` (lógica SQL de carga)
+- `database/sql/warehouse/warehouse_hu_v1_load.sql` (carga full)
+- `database/sql/warehouse/warehouse_hu_v1_load_incremental.sql` (carga incremental)
 
 ## Variables de entorno
 - `PGHOST` (default: `localhost`)
 - `PGPORT` (default: `5432`)
 - `PGUSER` (default: `postgres`)
-- `PGPASSWORD` (opcional si la instancia no lo requiere)
+- `PGPASSWORD` (opcional)
 - `PGDATABASE` (default: `PUNT_SISTEMES_PRO`)
 - `PSQL_PATH` (opcional, default PostgreSQL 17 en Windows)
 
 ## Qué hace
-1. Ejecuta SQL transaccional de carga full.
-2. Trunca `wh_hu_node` y `wh_hu_group`.
-3. Inserta grupos agregados y nodos desde las vistas fuente.
+1. Ejecuta SQL transaccional de carga (`full` o `incremental`).
+2. Carga:
+   - `analytics.wh_hu_group`
+   - `analytics.wh_hu_node`
+   - `analytics.wh_hu_embedding_input` (`full`, `solution`, `hu_description`)
+3. Gestiona watermark para incremental en `analytics.wh_etl_watermark`.
 4. Devuelve métricas de ejecución en JSON.
 
-## Reglas importantes aplicadas
+## Reglas aplicadas
 - `partner_id` de grupo:
   1. anchor si existe
   2. más frecuente en el grupo
   3. `NULL` si no hay
 - Horas/progreso en formato numérico
-- `is_deleted = false` en carga full inicial
+- `is_deleted = false` en carga v1
 
 ## Ejecución
 ```bash
-python etl/hu_etl_v1.py
+python etl/hu_etl_v1.py --mode full
+python etl/hu_etl_v1.py --mode incremental
 ```
 
-Salida:
-- JSON con contadores (`source_rows`, `group_rows`, `node_rows`) y timestamps.
+## Salida
+JSON con:
+- modo
+- tiempo de ejecución
+- filas en `wh_hu_group`
+- filas en `wh_hu_node`
+- filas en `wh_hu_embedding_input`
+- watermark (antes/después en incremental)
 
 ## Próximo paso
-- Añadir incremental con `wh_etl_watermark`.
-- Añadir generación de `wh_hu_embedding_input`.
+- Optimizar tiempo incremental.
+- Añadir validaciones de calidad por embedding.

@@ -16,6 +16,10 @@ La versión PRO separa en dos capas:
 
 Esto evita recalcular regex pesadas y recursividad completa en cada consulta interactiva.
 
+## Alcance temporal activo
+- La vista está limitada a HUs con `create_date::date >= '2024-10-02'`.
+- Motivo: reducir coste/volumen y centrarse en el periodo donde aparece el patrón Gherkin acordado.
+
 ## Objetos creados
 - `analytics.v_hu_estructura_base`
 - `analytics.mv_hu_estructura`

@@ -40,4 +40,5 @@ SELECT
     t.sale_order_id,
     t.sale_line_id
 FROM project_task t
-LEFT JOIN assignees a ON a.task_id = t.id;
+LEFT JOIN assignees a ON a.task_id = t.id
+WHERE t.create_date::date >= DATE '2024-10-02';

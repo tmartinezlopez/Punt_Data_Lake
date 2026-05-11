@@ -8,6 +8,7 @@ Exponer una vista **cruda** de Historias de Usuario orientada a backend, sin enr
 - Asignaciones: `project_task_user_rel` (agregado en array de IDs)
 - Sin joins de nombres ni traducciones
 - Sin limpieza de texto (se mantiene `description_raw`)
+- Filtro temporal activo: `create_date::date >= '2024-10-02'`
 
 ## Vista creada
 - `analytics.v_hu_raw`

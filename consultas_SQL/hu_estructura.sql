@@ -15,6 +15,7 @@ WITH RECURSIVE base AS (
         t.write_date,
         t.description
     FROM public.project_task t
+    WHERE t.create_date::date >= DATE '2024-10-02'
 ),
 roots AS (
     SELECT b.id AS root_id

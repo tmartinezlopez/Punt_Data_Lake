@@ -1,0 +1,58 @@
+name: Hallazgo de revisión DBA / SQL
+description: Registrar un hallazgo derivado de una revisión DBA o de calidad SQL (vistas, materializadas, índices, planes, riesgos).
+title: "[DBA] <resumen corto del hallazgo>"
+labels: ["dba-review", "sql"]
+body:
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severidad
+      description: Impacto operativo o de correctitud.
+      options:
+        - "high (correctitud, riesgo operativo, bloqueo)"
+        - "medium (rendimiento, mantenibilidad)"
+        - "low (estilo, consistencia, nice-to-have)"
+    validations:
+      required: true
+
+  - type: input
+    id: objeto
+    attributes:
+      label: Objeto / archivo afectado
+      description: Ruta y, si aplica, líneas. Ej. `consultas_SQL/hu_estructura.sql:161-165`
+      placeholder: consultas_SQL/<archivo>.sql:<líneas>
+    validations:
+      required: true
+
+  - type: textarea
+    id: hallazgo
+    attributes:
+      label: Hallazgo
+      description: Qué se observó. Sé concreto y técnico.
+    validations:
+      required: true
+
+  - type: textarea
+    id: impacto
+    attributes:
+      label: Impacto
+      description: Qué puede romper, qué coste tiene, en qué escenarios se manifiesta.
+    validations:
+      required: true
+
+  - type: textarea
+    id: propuesta
+    attributes:
+      label: Propuesta de solución
+      description: Cambio sugerido. Incluir SQL si procede.
+      render: sql
+    validations:
+      required: true
+
+  - type: textarea
+    id: referencias
+    attributes:
+      label: Referencias
+      description: Docs PG, issues relacionados, planes EXPLAIN, etc.
+    validations:
+      required: false

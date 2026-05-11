@@ -1,0 +1,1 @@
+﻿# Intencionalmente vacío: ETL v1 usa solo librería estándar de Python + psql.

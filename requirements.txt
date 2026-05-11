@@ -1,1 +1,35 @@
-﻿# Intencionalmente vacío: ETL v1 usa solo librería estándar de Python + psql.
+# Lockfile de dependencias para puntdl-inspect.
+# Fuente de verdad de RANGOS: pyproject.toml [project.dependencies].
+# Este archivo congela las versiones EXACTAS resueltas en el venv del proyecto
+# para reproducibilidad y para auditoría rápida.
+#
+# Cómo regenerar (desde el .venv ya creado y activado):
+#   pip install -e .
+#   pip freeze --exclude-editable > requirements.txt
+#
+# Ver doc completa en requirements.md.
+
+# --- Top-level (declaradas en pyproject) ---
+pandas==3.0.2
+psycopg==3.3.4
+psycopg-binary==3.3.4
+python-dotenv==1.2.2
+rich==15.0.0
+SQLAlchemy==2.0.49
+tabulate==0.10.0
+typer==0.25.1
+
+# --- Transitivas (resueltas por pip) ---
+annotated-doc==0.0.4
+click==8.3.3
+greenlet==3.5.0
+markdown-it-py==4.2.0
+mdurl==0.1.2
+numpy==2.4.4
+Pygments==2.20.0
+python-dateutil==2.9.0.post0
+shellingham==1.5.4
+six==1.17.0
+typing_extensions==4.15.0
+
+# Intencionalmente vacío: ETL v1 usa solo librería estándar de Python + psql.

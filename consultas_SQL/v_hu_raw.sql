@@ -1,4 +1,4 @@
-﻿-- v_hu_raw.sql
+-- v_hu_raw.sql
 -- Vista cruda de Historias de Usuario (backend-first, sin campos name)
 
 CREATE SCHEMA IF NOT EXISTS analytics;
@@ -10,7 +10,7 @@ WITH assignees AS (
     SELECT
         r.task_id,
         array_agg(r.user_id ORDER BY r.user_id) AS assignee_user_ids
-    FROM project_task_user_rel r
+    FROM public.project_task_user_rel r
     GROUP BY r.task_id
 )
 SELECT
@@ -39,6 +39,6 @@ SELECT
     t.helpdesk_ticket_id,
     t.sale_order_id,
     t.sale_line_id
-FROM project_task t
+FROM public.project_task t
 LEFT JOIN assignees a ON a.task_id = t.id
-WHERE t.create_date::date >= DATE '2024-10-02';
+WHERE t.create_date >= TIMESTAMP '2024-10-02 00:00:00';

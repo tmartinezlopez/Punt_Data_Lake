@@ -1,4 +1,4 @@
-ï»¿-- hu_estructura.sql (PRO)
+-- hu_estructura.sql (PRO)
 
 CREATE INDEX IF NOT EXISTS idx_project_task_parent_id ON public.project_task(parent_id);
 
@@ -17,10 +17,12 @@ WITH RECURSIVE base AS (
         t.write_date,
         t.description
     FROM public.project_task t
-    WHERE t.create_date::date >= DATE '2024-10-02'
+    WHERE t.create_date >= TIMESTAMP '2024-10-02 00:00:00'
 ),
 roots AS (
-    SELECT b.id AS root_id
+    SELECT
+        b.id AS root_id,
+        (b.parent_id IS NOT NULL AND p.id IS NULL) AS is_synthetic_root
     FROM base b
     LEFT JOIN base p ON p.id = b.parent_id
     WHERE b.parent_id IS NULL OR p.id IS NULL
@@ -72,7 +74,7 @@ anchor_per_root AS (
         n.depth AS anchor_depth
     FROM nodes n
     WHERE
-        lower(trim(coalesce(n.name, ''))) NOT IN ('desarrollo', 'consultoria odoo', 'consultorÃ­a odoo', 'tareas', 'tarea', 'backlog', 'general')
+        lower(trim(coalesce(n.name, ''))) NOT IN ('desarrollo', 'consultoria odoo', 'consultoría odoo', 'tareas', 'tarea', 'backlog', 'general')
         AND (
             length(trim(regexp_replace(COALESCE(n.description, ''), '<[^>]+>', ' ', 'g'))) >= 80
             OR n.child_count = 0
@@ -82,6 +84,7 @@ anchor_per_root AS (
 anchor_final AS (
     SELECT
         r.root_id,
+        r.is_synthetic_root,
         COALESCE(a.anchor_task_id, r.root_id) AS anchor_task_id,
         COALESCE(a.anchor_depth, 0) AS anchor_depth
     FROM roots r
@@ -89,6 +92,7 @@ anchor_final AS (
 )
 SELECT
     n.root_id,
+    af.is_synthetic_root,
     af.anchor_task_id,
     af.anchor_depth,
     n.task_id,
@@ -108,6 +112,7 @@ CREATE MATERIALIZED VIEW analytics.mv_hu_estructura AS
 WITH enriched AS (
     SELECT
         b.root_id,
+        b.is_synthetic_root,
         b.anchor_task_id,
         b.anchor_depth,
         b.task_id,
@@ -126,9 +131,23 @@ WITH enriched AS (
             'gi'
         ) AS desc_txt
     FROM analytics.v_hu_estructura_base b
+),
+flags AS (
+    SELECT
+        e.*,
+        length(trim(COALESCE(e.desc_txt, ''))) AS desc_len,
+        (e.desc_txt ~* 'feature\\s*:') AS has_feature,
+        (e.desc_txt ~* 'scenario\\s*:') AS has_scenario,
+        (
+            (e.desc_txt ~* '\\bgiven\\b' AND e.desc_txt ~* '\\bwhen\\b' AND e.desc_txt ~* '\\bthen\\b')
+            OR
+            (e.desc_txt ~* '\\bdado\\b' AND e.desc_txt ~* '\\bcuando\\b' AND e.desc_txt ~* '\\bentonces\\b')
+        ) AS has_gwt
+    FROM enriched e
 )
 SELECT
     e.root_id,
+    e.is_synthetic_root,
     e.anchor_task_id,
     e.anchor_depth,
     e.task_id,
@@ -140,36 +159,35 @@ SELECT
     e.create_date,
     e.write_date,
     e.child_count,
-    length(trim(COALESCE(e.desc_txt, ''))) AS desc_len,
-    (e.desc_txt ~* 'feature\\s*:') AS has_feature,
-    (e.desc_txt ~* 'scenario\\s*:') AS has_scenario,
+    e.desc_len,
+    e.has_feature,
+    e.has_scenario,
+    e.has_gwt,
     (
-        (e.desc_txt ~* '\\bgiven\\b' AND e.desc_txt ~* '\\bwhen\\b' AND e.desc_txt ~* '\\bthen\\b')
+        lower(trim(coalesce(e.name, ''))) IN ('desarrollo', 'consultoria odoo', 'consultoría odoo', 'tareas', 'tarea', 'backlog', 'general')
         OR
-        (e.desc_txt ~* '\\bdado\\b' AND e.desc_txt ~* '\\bcuando\\b' AND e.desc_txt ~* '\\bentonces\\b')
-    ) AS has_gwt,
-    (
-        lower(trim(coalesce(e.name, ''))) IN ('desarrollo', 'consultoria odoo', 'consultorÃ­a odoo', 'tareas', 'tarea', 'backlog', 'general')
-        OR
-        (length(trim(COALESCE(e.desc_txt, ''))) < 80 AND e.child_count >= 5)
+        (e.desc_len < 80 AND e.child_count >= 5)
     ) AS is_container,
     (
-        (e.desc_txt ~* 'feature\\s*:')
-        OR (e.desc_txt ~* 'scenario\\s*:')
-        OR (
-            (e.desc_txt ~* '\\bgiven\\b' AND e.desc_txt ~* '\\bwhen\\b' AND e.desc_txt ~* '\\bthen\\b')
-            OR
-            (e.desc_txt ~* '\\bdado\\b' AND e.desc_txt ~* '\\bcuando\\b' AND e.desc_txt ~* '\\bentonces\\b')
+        NOT (
+            lower(trim(coalesce(e.name, ''))) IN ('desarrollo', 'consultoria odoo', 'consultoría odoo', 'tareas', 'tarea', 'backlog', 'general')
+            OR (e.desc_len < 80 AND e.child_count >= 5)
         )
-        OR length(trim(COALESCE(e.desc_txt, ''))) >= 180
-        OR (
-            lower(trim(coalesce(e.name, ''))) NOT IN ('desarrollo', 'consultoria odoo', 'consultorÃ­a odoo', 'tareas', 'tarea', 'backlog', 'general')
-            AND length(trim(COALESCE(e.desc_txt, ''))) >= 80
+        AND (
+            e.has_feature
+            OR e.has_scenario
+            OR e.has_gwt
+            OR e.desc_len >= 180
+            OR (
+                lower(trim(coalesce(e.name, ''))) NOT IN ('desarrollo', 'consultoria odoo', 'consultoría odoo', 'tareas', 'tarea', 'backlog', 'general')
+                AND e.desc_len >= 80
+            )
         )
     ) AS is_functional
-FROM enriched e;
+FROM flags e;
 
 CREATE INDEX IF NOT EXISTS idx_mv_hu_estructura_root_id ON analytics.mv_hu_estructura(root_id);
 CREATE INDEX IF NOT EXISTS idx_mv_hu_estructura_anchor_task_id ON analytics.mv_hu_estructura(anchor_task_id);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_mv_hu_estructura_task_id_uq ON analytics.mv_hu_estructura(task_id);
 CREATE INDEX IF NOT EXISTS idx_mv_hu_estructura_depth ON analytics.mv_hu_estructura(depth);
+ANALYZE analytics.mv_hu_estructura;

@@ -20,3 +20,14 @@ bbdd/
 Presupuestos/
 presupuestos/
 Pesupuestos/
+
+# Docker / entorno local
+docker-compose.override.yml
+.env
+.env.*
+!.env.example
+
+# Volúmenes de datos de Postgres en local
+pgdata/
+postgres-data/
+**/pgdata/

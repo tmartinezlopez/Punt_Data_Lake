@@ -31,3 +31,16 @@ docker-compose.override.yml
 pgdata/
 postgres-data/
 **/pgdata/
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.egg-info/
+build/
+dist/

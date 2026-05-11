@@ -16,6 +16,8 @@ La versión PRO separa en dos capas:
 
 Esto evita recalcular regex pesadas y recursividad completa en cada consulta interactiva.
 
+Además, el CTE recursivo incluye protección de ciclos sobre `parent_id` mediante un `path` acumulado para evitar volver a visitar nodos ya recorridos.
+
 ## Alcance temporal activo
 - La vista está limitada a HUs con `create_date::date >= '2024-10-02'`.
 - Motivo: reducir coste/volumen y centrarse en el periodo donde aparece el patrón Gherkin acordado.
@@ -24,10 +26,10 @@ Esto evita recalcular regex pesadas y recursividad completa en cada consulta int
 - `analytics.v_hu_estructura_base`
 - `analytics.mv_hu_estructura`
 - Índices:
-  - `public.project_task(parent_id)`
+  - `public.project_task(parent_id)` (creado antes del CTE recursivo)
   - `analytics.mv_hu_estructura(root_id)`
   - `analytics.mv_hu_estructura(anchor_task_id)`
-  - `analytics.mv_hu_estructura(task_id)`
+  - `analytics.mv_hu_estructura(task_id)` (**UNIQUE**)
   - `analytics.mv_hu_estructura(depth)`
 
 ## Reglas de anchor
@@ -49,6 +51,10 @@ Si no hay candidato, fallback al `root_id`.
 2. Refrescar cuando cambie `project_task`:
 ```sql
 REFRESH MATERIALIZED VIEW analytics.mv_hu_estructura;
+```
+Si se desea evitar bloqueo de lectura:
+```sql
+REFRESH MATERIALIZED VIEW CONCURRENTLY analytics.mv_hu_estructura;
 ```
 3. Consultar:
 ```sql

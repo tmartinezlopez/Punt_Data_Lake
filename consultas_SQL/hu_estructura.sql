@@ -1,5 +1,7 @@
 ﻿-- hu_estructura.sql (PRO)
 
+CREATE INDEX IF NOT EXISTS idx_project_task_parent_id ON public.project_task(parent_id);
+
 DROP VIEW IF EXISTS analytics.v_hu_estructura_base CASCADE;
 DROP MATERIALIZED VIEW IF EXISTS analytics.mv_hu_estructura;
 
@@ -24,12 +26,21 @@ roots AS (
     WHERE b.parent_id IS NULL OR p.id IS NULL
 ),
 tree AS (
-    SELECT r.root_id, r.root_id AS id, 0 AS depth
+    SELECT
+        r.root_id,
+        r.root_id AS id,
+        0 AS depth,
+        ARRAY[r.root_id]::int[] AS path
     FROM roots r
     UNION ALL
-    SELECT tr.root_id, c.id, tr.depth + 1
+    SELECT
+        tr.root_id,
+        c.id,
+        tr.depth + 1,
+        tr.path || c.id
     FROM tree tr
     JOIN base c ON c.parent_id = tr.id
+    WHERE c.id <> ALL(tr.path)
 ),
 children_count AS (
     SELECT b.parent_id AS id, COUNT(*)::int AS child_count
@@ -158,8 +169,7 @@ SELECT
     ) AS is_functional
 FROM enriched e;
 
-CREATE INDEX IF NOT EXISTS idx_project_task_parent_id ON public.project_task(parent_id);
 CREATE INDEX IF NOT EXISTS idx_mv_hu_estructura_root_id ON analytics.mv_hu_estructura(root_id);
 CREATE INDEX IF NOT EXISTS idx_mv_hu_estructura_anchor_task_id ON analytics.mv_hu_estructura(anchor_task_id);
-CREATE INDEX IF NOT EXISTS idx_mv_hu_estructura_task_id ON analytics.mv_hu_estructura(task_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_mv_hu_estructura_task_id_uq ON analytics.mv_hu_estructura(task_id);
 CREATE INDEX IF NOT EXISTS idx_mv_hu_estructura_depth ON analytics.mv_hu_estructura(depth);

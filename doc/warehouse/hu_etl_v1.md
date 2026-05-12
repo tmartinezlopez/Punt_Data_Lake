@@ -27,17 +27,8 @@ Modos soportados:
 2. Carga:
    - `analytics.wh_hu_group`
    - `analytics.wh_hu_node`
-   - `analytics.wh_hu_embedding_input` (`full`, `solution`, `hu_description`)
 3. Gestiona watermark para incremental en `analytics.wh_etl_watermark`.
 4. Devuelve métricas de ejecución en JSON.
-
-## Reglas aplicadas
-- `partner_id` de grupo:
-  1. anchor si existe
-  2. más frecuente en el grupo
-  3. `NULL` si no hay
-- Horas/progreso en formato numérico
-- `is_deleted = false` en carga v1
 
 ## Ejecución
 ```bash
@@ -51,9 +42,7 @@ JSON con:
 - tiempo de ejecución
 - filas en `wh_hu_group`
 - filas en `wh_hu_node`
-- filas en `wh_hu_embedding_input`
 - watermark (antes/después en incremental)
 
-## Próximo paso
-- Optimizar tiempo incremental.
-- Añadir validaciones de calidad por embedding.
+## Nota
+- La carga de `wh_hu_embedding_input` está explícitamente fuera de alcance en esta fase.

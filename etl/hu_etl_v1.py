@@ -95,13 +95,11 @@ def run_full_load() -> dict:
     upsert_watermark(max_source_write_date)
     group_count = query_scalar("SELECT COUNT(*) FROM analytics.wh_hu_group;")
     node_count = query_scalar("SELECT COUNT(*) FROM analytics.wh_hu_node;")
-    emb_count = query_scalar("SELECT COUNT(*) FROM analytics.wh_hu_embedding_input;")
     return {
         "mode": "full",
         "elapsed_seconds": elapsed,
         "wh_hu_group_rows": int(group_count or 0),
         "wh_hu_node_rows": int(node_count or 0),
-        "wh_hu_embedding_input_rows": int(emb_count or 0),
         "watermark": max_source_write_date,
         "sql_file": str(SQL_LOAD_FULL),
     }
@@ -110,19 +108,17 @@ def run_full_load() -> dict:
 def run_incremental_load() -> dict:
     watermark = get_watermark()
     t0 = time.time()
-    run_psql_file(SQL_LOAD_INCREMENTAL, {"watermark_ts": watermark})
+    run_psql_file(SQL_LOAD_INCREMENTAL)
     elapsed = round(time.time() - t0, 3)
     max_source_write_date = get_max_source_write_date()
     upsert_watermark(max_source_write_date)
     group_count = query_scalar("SELECT COUNT(*) FROM analytics.wh_hu_group;")
     node_count = query_scalar("SELECT COUNT(*) FROM analytics.wh_hu_node;")
-    emb_count = query_scalar("SELECT COUNT(*) FROM analytics.wh_hu_embedding_input;")
     return {
         "mode": "incremental",
         "elapsed_seconds": elapsed,
         "wh_hu_group_rows": int(group_count or 0),
         "wh_hu_node_rows": int(node_count or 0),
-        "wh_hu_embedding_input_rows": int(emb_count or 0),
         "watermark_before": watermark,
         "watermark_after": max_source_write_date,
         "sql_file": str(SQL_LOAD_INCREMENTAL),

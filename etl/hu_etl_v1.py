@@ -19,18 +19,28 @@ def env(name: str, default: str | None = None) -> str:
     return value
 
 
+def env_any(names: list[str], default: str | None = None) -> str:
+    for n in names:
+        value = os.getenv(n)
+        if value is not None:
+            return value
+    if default is not None:
+        return default
+    raise RuntimeError(f"Missing required environment variable. Tried: {', '.join(names)}")
+
+
 def run_psql_file(sql_path: Path, extra_vars: dict[str, str] | None = None) -> None:
     psql = os.getenv("PSQL_PATH", r"C:\Program Files\PostgreSQL\17\bin\psql.exe")
     cmd = [
         psql,
         "-h",
-        env("PGHOST", "localhost"),
+        env_any(["PGHOST", "POSTGRES_HOST"], "localhost"),
         "-p",
-        env("PGPORT", "5432"),
+        env_any(["PGPORT", "POSTGRES_PORT"], "5432"),
         "-U",
-        env("PGUSER", "postgres"),
+        env_any(["PGUSER", "POSTGRES_USER"], "postgres"),
         "-d",
-        env("PGDATABASE", "PUNT_SISTEMES_PRO"),
+        env_any(["PGDATABASE", "POSTGRES_DB"], "PUNT_SISTEMES_PRO"),
         "-v",
         "ON_ERROR_STOP=1",
         "-f",
@@ -47,13 +57,13 @@ def query_scalar(sql: str) -> str:
     cmd = [
         psql,
         "-h",
-        env("PGHOST", "localhost"),
+        env_any(["PGHOST", "POSTGRES_HOST"], "localhost"),
         "-p",
-        env("PGPORT", "5432"),
+        env_any(["PGPORT", "POSTGRES_PORT"], "5432"),
         "-U",
-        env("PGUSER", "postgres"),
+        env_any(["PGUSER", "POSTGRES_USER"], "postgres"),
         "-d",
-        env("PGDATABASE", "PUNT_SISTEMES_PRO"),
+        env_any(["PGDATABASE", "POSTGRES_DB"], "PUNT_SISTEMES_PRO"),
         "-At",
         "-c",
         sql,

@@ -34,6 +34,7 @@ postgres-data/
 
 # Python
 .venv/
+.envpy/
 venv/
 __pycache__/
 *.pyc
@@ -44,3 +45,6 @@ __pycache__/
 *.egg-info/
 build/
 dist/
+
+# Dependencias locales no versionadas
+vendor/
